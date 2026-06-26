@@ -1,0 +1,125 @@
+/* Status states (loading, empty, error) */
+
+.status-state__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .status-state__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .status-state__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-state__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Skeleton card */
+.skeleton-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.skeleton-card__image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f3f4f6;
+}
+
+.skeleton-card__body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: #e5e7eb;
+}
+
+.skeleton-line--sm {
+  width: 40%;
+}
+
+.skeleton-line--md {
+  width: 30%;
+  height: 16px;
+}
+
+.skeleton-line--lg {
+  width: 70%;
+}
+
+.skeleton-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Centered states (empty, error) */
+.status-state--centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.status-state__icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.status-state__title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 6px;
+}
+
+.status-state__text {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  margin: 0;
+  max-width: 360px;
+}
+
+.status-state__retry-btn {
+  margin-top: 16px;
+  padding: 8px 24px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fff;
+  background: #ef4444;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.status-state__retry-btn:hover {
+  background: #dc2626;
+}

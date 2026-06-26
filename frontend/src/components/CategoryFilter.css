@@ -1,0 +1,29 @@
+.category-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-filter__label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.category-filter__select {
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+  min-width: 160px;
+}
+
+.category-filter__select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
