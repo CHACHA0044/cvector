@@ -32,8 +32,8 @@ async function main() {
       const categoryName = categoryObj.name;
       const name = generateName(categoryName);
       const price = generatePrice(categoryName);
-      const { createdAt, updatedAt } = generateDates();
-      const image = generateImageUrl(productId);
+            const { createdAt, updatedAt } = generateDates();
+      const image = generateImageUrl(productId, name, categoryName);
 
       productsBatch.push({
         name,
