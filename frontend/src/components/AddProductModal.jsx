@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "./AddProductModal.css";
 
@@ -11,6 +11,25 @@ export default function AddProductModal({ isOpen, onClose, categories, onProduct
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleCategorySelect = (cat) => {
+    setCategory(cat);
+    setIsDropdownOpen(false);
+  };
 
   if (!isOpen) return null;
 
@@ -79,24 +98,38 @@ export default function AddProductModal({ isOpen, onClose, categories, onProduct
             />
           </div>
 
-          <div className="modal-field">
-            <label className="modal-label" htmlFor="product-category">
+          <div className="modal-field" ref={dropdownRef}>
+            <label className="modal-label">
               Category *
             </label>
-            <select
-              id="product-category"
-              className="modal-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {categories
-                .filter((c) => c !== "All")
-                .map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-            </select>
+            <div className="modal-custom-dropdown">
+              <button
+                type="button"
+                className={`modal-dropdown-trigger ${isDropdownOpen ? "modal-dropdown-trigger--active" : ""}`}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                <span>{category}</span>
+                <span className={`modal-dropdown-arrow ${isDropdownOpen ? "modal-dropdown-arrow--open" : ""}`}>
+                  ▼
+                </span>
+              </button>
+
+              {isDropdownOpen && (
+                <ul className="modal-dropdown-menu">
+                  {categories
+                    .filter((c) => c !== "All")
+                    .map((cat) => (
+                      <li
+                        key={cat}
+                        className={`modal-dropdown-item ${category === cat ? "modal-dropdown-item--selected" : ""}`}
+                        onClick={() => handleCategorySelect(cat)}
+                      >
+                        {cat}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           <div className="modal-field">

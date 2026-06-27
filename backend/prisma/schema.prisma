@@ -9,14 +9,15 @@ generator client {
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
-  name      String
-  category  String
-  price     Float
-  image     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String
+  price       Float
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isUserAdded Boolean  @default(false)
 
-  @@index([updatedAt(sort: Desc), id(sort: Desc)])
-  @@index([category, updatedAt(sort: Desc), id(sort: Desc)])
+  @@index([isUserAdded(sort: Desc), updatedAt(sort: Desc), id(sort: Desc)])
+  @@index([category, isUserAdded(sort: Desc), updatedAt(sort: Desc), id(sort: Desc)])
 }

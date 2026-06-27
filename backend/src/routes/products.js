@@ -53,31 +53,32 @@ router.get("/", async (req, res) => {
     // This allows PostgreSQL to run an Index-Only Scan to find the page keys, 
     // and only performs the heap access join for the final requested rows, avoiding
     // table-scan performance degradation at large offsets.
+    // We order by "isUserAdded" DESC first so that user-added items are kept pinned on top.
     let products = [];
     if (category && category !== "All") {
       products = await prisma.$queryRaw`
-        SELECT p.id, p.name, p.category, p.price, p.image, p."createdAt", p."updatedAt"
+        SELECT p.id, p.name, p.category, p.price, p.image, p."createdAt", p."updatedAt", p."isUserAdded"
         FROM "Product" p
         JOIN (
           SELECT id
           FROM "Product"
           WHERE category = ${category}
-          ORDER BY "updatedAt" DESC, "id" DESC
+          ORDER BY "isUserAdded" DESC, "updatedAt" DESC, "id" DESC
           LIMIT ${limit + 1} OFFSET ${skip}
         ) sub ON p.id = sub.id
-        ORDER BY p."updatedAt" DESC, p.id DESC;
+        ORDER BY p."isUserAdded" DESC, p."updatedAt" DESC, p.id DESC;
       `;
     } else {
       products = await prisma.$queryRaw`
-        SELECT p.id, p.name, p.category, p.price, p.image, p."createdAt", p."updatedAt"
+        SELECT p.id, p.name, p.category, p.price, p.image, p."createdAt", p."updatedAt", p."isUserAdded"
         FROM "Product" p
         JOIN (
           SELECT id
           FROM "Product"
-          ORDER BY "updatedAt" DESC, "id" DESC
+          ORDER BY "isUserAdded" DESC, "updatedAt" DESC, "id" DESC
           LIMIT ${limit + 1} OFFSET ${skip}
         ) sub ON p.id = sub.id
-        ORDER BY p."updatedAt" DESC, p.id DESC;
+        ORDER BY p."isUserAdded" DESC, p."updatedAt" DESC, p.id DESC;
       `;
     }
 
@@ -178,12 +179,13 @@ router.post("/", async (req, res) => {
     const searchKeyword = keywords || category.toLowerCase() || "product";
     const productImage = image || `https://loremflickr.com/400/400/${searchKeyword}?lock=${seed}`;
 
-    const newProduct = await prisma.product.create({
+        const newProduct = await prisma.product.create({
       data: {
         name,
         category,
         price: cleanPrice,
         image: productImage,
+        isUserAdded: true,
       },
     });
 
