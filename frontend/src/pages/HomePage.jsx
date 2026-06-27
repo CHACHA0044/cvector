@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useProducts, useCategories } from "../hooks/useProducts";
 import CategoryFilter from "../components/CategoryFilter";
 import ProductGrid from "../components/ProductGrid";
 import Pagination from "../components/Pagination";
+import AddProductModal from "../components/AddProductModal";
 import { LoadingState, EmptyState, ErrorState } from "../components/StatusStates";
 import "./HomePage.css";
 
@@ -19,15 +21,31 @@ export default function HomePage() {
   } = useProducts();
 
   const categories = useCategories();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // When a new product is successfully added, we reset pagination to Page 1
+  // of the category the product belongs to, displaying it immediately at the top.
+  const handleProductAdded = (newProduct) => {
+    changeCategory(newProduct.category);
+  };
 
   return (
     <div className="home-page">
       <header className="home-page__header">
         <div className="home-page__header-inner">
-          <h1 className="home-page__title">Products</h1>
-          <p className="home-page__subtitle">
-            Browse our collection of {total} product{total !== 1 ? "s" : ""}
-          </p>
+          <div className="home-page__header-left">
+            <h1 className="home-page__title">Products</h1>
+            <p className="home-page__subtitle">
+              Browse our collection of {total} product{total !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <button
+            className="home-page__add-btn"
+            onClick={() => setIsModalOpen(true)}
+            id="add-product-btn"
+          >
+            <span className="home-page__add-btn-icon">+</span> Add Product
+          </button>
         </div>
       </header>
 
@@ -65,6 +83,13 @@ export default function HomePage() {
           </>
         )}
       </main>
+
+      <AddProductModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        categories={categories}
+        onProductAdded={handleProductAdded}
+      />
     </div>
   );
 }

@@ -15,9 +15,13 @@ function formatPrice(price) {
   }).format(price);
 }
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, index = 0 }) {
   return (
-    <div className="product-card" id={`product-${product.id}`}>
+    <div
+      className="product-card"
+      id={`product-${product.id}`}
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
       <div className="product-card__image-wrapper">
         <img
           className="product-card__image"

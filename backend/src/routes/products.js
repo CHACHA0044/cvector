@@ -147,4 +147,51 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/products
+ *
+ * Creates a new product. Its updatedAt will default to now,
+ * placing it at the very top of the first page.
+ */
+router.post("/", async (req, res) => {
+  try {
+    const { name, category, price, image } = req.body;
+
+    if (!name || !category || price === undefined) {
+      return res.status(400).json({ error: "Missing required fields: name, category, price" });
+    }
+
+    const cleanPrice = parseFloat(price);
+    if (isNaN(cleanPrice)) {
+      return res.status(400).json({ error: "Price must be a valid number" });
+    }
+
+    // Dynamic keyword search image using category / name
+    const seed = Date.now();
+    const cleanName = name || "";
+    const words = cleanName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .split(/\s+/)
+      .filter(w => w.length > 2);
+    const keywords = words.slice(-2).join(",");
+    const searchKeyword = keywords || category.toLowerCase() || "product";
+    const productImage = image || `https://loremflickr.com/400/400/${searchKeyword}?lock=${seed}`;
+
+    const newProduct = await prisma.product.create({
+      data: {
+        name,
+        category,
+        price: cleanPrice,
+        image: productImage,
+      },
+    });
+
+    res.status(201).json({ data: newProduct });
+  } catch (error) {
+    console.error("Error creating product:", error);
+    res.status(500).json({ error: "Failed to create product" });
+  }
+});
+
 export default router;

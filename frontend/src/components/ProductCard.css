@@ -1,16 +1,28 @@
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .product-card {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   overflow: hidden;
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  animation: cardFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .product-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);
 }
 
 .product-card__image-wrapper {
