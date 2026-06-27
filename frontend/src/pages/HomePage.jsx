@@ -1,7 +1,7 @@
 import { useProducts, useCategories } from "../hooks/useProducts";
 import CategoryFilter from "../components/CategoryFilter";
 import ProductGrid from "../components/ProductGrid";
-import LoadMoreButton from "../components/LoadMoreButton";
+import Pagination from "../components/Pagination";
 import { LoadingState, EmptyState, ErrorState } from "../components/StatusStates";
 import "./HomePage.css";
 
@@ -10,11 +10,11 @@ export default function HomePage() {
     products,
     category,
     changeCategory,
-    loadMore,
-    hasMore,
+    page,
+    goToPage,
+    totalPages,
     total,
     loading,
-    loadingMore,
     error,
   } = useProducts();
 
@@ -40,7 +40,7 @@ export default function HomePage() {
           />
           {!loading && products.length > 0 && (
             <span className="home-page__count">
-              Showing {products.length} of {total}
+              Showing Page {page} of {totalPages} ({products.length} items)
             </span>
           )}
         </div>
@@ -57,10 +57,10 @@ export default function HomePage() {
         ) : (
           <>
             <ProductGrid products={products} />
-            <LoadMoreButton
-              onClick={loadMore}
-              loading={loadingMore}
-              hasMore={hasMore}
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={goToPage}
             />
           </>
         )}

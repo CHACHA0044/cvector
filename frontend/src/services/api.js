@@ -10,10 +10,10 @@ const api = axios.create({
 /**
  * Fetch products with cursor-based pagination and optional category filter.
  */
-export async function fetchProducts({ category, limit = 8, cursor } = {}) {
-  const params = { limit };
+export async function fetchProducts({ category, limit = 8, page = 1, includeCount = false } = {}) {
+  const params = { limit, page };
   if (category && category !== "All") params.category = category;
-  if (cursor) params.cursor = cursor;
+  if (includeCount) params.includeCount = true;
 
   const { data } = await api.get("/products", { params });
   return data;

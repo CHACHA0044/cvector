@@ -37,47 +37,23 @@ const prisma = new PrismaClient();
  */
 router.get("/", async (req, res) => {
   try {
-    const { category, limit: rawLimit, cursor } = req.query;
+    const { category, limit: rawLimit, page: rawPage, includeCount } = req.query;
 
-    // Clamp limit between 1 and 50 to prevent abuse
+    // Clamp limit between 1 and 50
     const limit = Math.min(Math.max(parseInt(rawLimit) || 8, 1), 50);
+    const page = Math.max(parseInt(rawPage) || 1, 1);
+    const skip = (page - 1) * limit;
 
-    // Build the WHERE clause — category filter + cursor condition
     const where = {};
     if (category && category !== "All") {
       where.category = category;
     }
 
-    // Decode and apply cursor for keyset pagination
-    // The cursor encodes the (updatedAt, id) of the last seen item.
-    // We fetch rows where (updatedAt, id) < cursor using a compound condition.
-    if (cursor) {
-      try {
-        const decoded = JSON.parse(Buffer.from(cursor, "base64").toString("utf-8"));
-        if (decoded && decoded.updatedAt && decoded.id) {
-          where.AND = [
-            {
-              OR: [
-                // Row has an earlier updatedAt — definitely comes after in DESC order
-                { updatedAt: { lt: new Date(decoded.updatedAt) } },
-                // Same updatedAt but smaller id — tiebreaker in DESC order
-                {
-                  updatedAt: new Date(decoded.updatedAt),
-                  id: { lt: parseInt(decoded.id) },
-                },
-              ],
-            },
-          ];
-        }
-      } catch (err) {
-        // Invalid cursor — ignore and return from the beginning
-        console.error("Failed to parse cursor:", err.message);
-      }
-    }
-
-    // Fetch limit + 1 to check if there are more pages without a separate COUNT query
+    // Fetch the products for the current page. We fetch limit + 1 to easily determine
+    // if there is a next page without doing count operations.
     const products = await prisma.product.findMany({
       where,
+      skip,
       take: limit + 1,
       orderBy: [
         { updatedAt: "desc" },
@@ -88,24 +64,18 @@ router.get("/", async (req, res) => {
     const hasMore = products.length > limit;
     const data = hasMore ? products.slice(0, limit) : products;
 
-    // Encode the cursor for the next page
-    let nextCursor = null;
-    if (hasMore && data.length > 0) {
-      const lastItem = data[data.length - 1];
-      nextCursor = Buffer.from(
-        JSON.stringify({ updatedAt: lastItem.updatedAt, id: lastItem.id })
-      ).toString("base64");
+    // Fetch total count only if explicitly requested (e.g. on initial load or category change)
+    // to bypass the heavy count database query for subsequent pagination steps.
+    let total = null;
+    if (includeCount === "true") {
+      const countWhere = {};
+      if (category && category !== "All") {
+        countWhere.category = category;
+      }
+      total = await prisma.product.count({ where: countWhere });
     }
 
-    // Total count uses only the category filter (no cursor) so the frontend
-    // can show "Showing X of Y" regardless of pagination depth.
-    const countWhere = {};
-    if (category && category !== "All") {
-      countWhere.category = category;
-    }
-    const total = await prisma.product.count({ where: countWhere });
-
-    res.json({ data, nextCursor, hasMore, total });
+    res.json({ data, hasMore, total });
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ error: "Failed to fetch products" });

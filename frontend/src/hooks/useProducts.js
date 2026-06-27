@@ -7,23 +7,29 @@ import { fetchProducts, fetchCategories } from "../services/api";
 export function useProducts() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("All");
-  const [cursor, setCursor] = useState(null);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const limit = 8;
 
-  // Load initial products whenever category changes
-  const loadProducts = useCallback(async (cat) => {
+  // Load products. Fetches count only if includeCount is true.
+  const loadProducts = useCallback(async (cat, pageNum, includeCount = false) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchProducts({ category: cat });
+      const result = await fetchProducts({
+        category: cat,
+        page: pageNum,
+        limit,
+        includeCount,
+      });
       setProducts(result.data);
-      setCursor(result.nextCursor);
       setHasMore(result.hasMore);
-      setTotal(result.total);
+      if (includeCount && result.total !== null) {
+        setTotal(result.total);
+      }
     } catch (err) {
       setError(err.message || "Failed to load products");
       setProducts([]);
@@ -32,46 +38,43 @@ export function useProducts() {
     }
   }, []);
 
-  // Load more products (append)
-  const loadMore = useCallback(async () => {
-    if (!hasMore || loadingMore) return;
-    setLoadingMore(true);
-    setError(null);
-    try {
-      const result = await fetchProducts({ category, cursor });
-      setProducts((prev) => [...prev, ...result.data]);
-      setCursor(result.nextCursor);
-      setHasMore(result.hasMore);
-    } catch (err) {
-      setError(err.message || "Failed to load more products");
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [category, cursor, hasMore, loadingMore]);
+  const goToPage = useCallback(
+    (pageNum) => {
+      if (pageNum < 1) return;
+      // If we know total pages and try to exceed it, clamp it
+      const totalPages = Math.ceil(total / limit);
+      if (totalPages > 0 && pageNum > totalPages) return;
 
-  // Change category resets the list
+      setPage(pageNum);
+      loadProducts(category, pageNum, false); // Fetch data without the count query!
+    },
+    [category, total, loadProducts]
+  );
+
   const changeCategory = useCallback(
     (newCategory) => {
       setCategory(newCategory);
-      loadProducts(newCategory);
+      setPage(1);
+      loadProducts(newCategory, 1, true); // Fetch data AND count when category changes!
     },
     [loadProducts]
   );
 
   // Initial load
   useEffect(() => {
-    loadProducts("All");
+    loadProducts("All", 1, true);
   }, [loadProducts]);
 
   return {
     products,
     category,
     changeCategory,
-    loadMore,
+    page,
+    goToPage,
     hasMore,
     total,
+    totalPages: Math.ceil(total / limit),
     loading,
-    loadingMore,
     error,
   };
 }
