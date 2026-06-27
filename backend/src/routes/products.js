@@ -49,17 +49,37 @@ router.get("/", async (req, res) => {
       where.category = category;
     }
 
-    // Fetch the products for the current page. We fetch limit + 1 to easily determine
-    // if there is a next page without doing count operations.
-    const products = await prisma.product.findMany({
-      where,
-      skip,
-      take: limit + 1,
-      orderBy: [
-        { updatedAt: "desc" },
-        { id: "desc" },
-      ],
-    });
+    // Fetch products for current page using a Deferred Join (Late Row Lookup) optimization.
+    // This allows PostgreSQL to run an Index-Only Scan to find the page keys, 
+    // and only performs the heap access join for the final requested rows, avoiding
+    // table-scan performance degradation at large offsets.
+    let products = [];
+    if (category && category !== "All") {
+      products = await prisma.$queryRaw`
+        SELECT p.id, p.name, p.category, p.price, p.image, p."createdAt", p."updatedAt"
+        FROM "Product" p
+        JOIN (
+          SELECT id
+          FROM "Product"
+          WHERE category = ${category}
+          ORDER BY "updatedAt" DESC, "id" DESC
+          LIMIT ${limit + 1} OFFSET ${skip}
+        ) sub ON p.id = sub.id
+        ORDER BY p."updatedAt" DESC, p.id DESC;
+      `;
+    } else {
+      products = await prisma.$queryRaw`
+        SELECT p.id, p.name, p.category, p.price, p.image, p."createdAt", p."updatedAt"
+        FROM "Product" p
+        JOIN (
+          SELECT id
+          FROM "Product"
+          ORDER BY "updatedAt" DESC, "id" DESC
+          LIMIT ${limit + 1} OFFSET ${skip}
+        ) sub ON p.id = sub.id
+        ORDER BY p."updatedAt" DESC, p.id DESC;
+      `;
+    }
 
     const hasMore = products.length > limit;
     const data = hasMore ? products.slice(0, limit) : products;
